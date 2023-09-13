@@ -82,9 +82,9 @@
             nameScheme = makeSectionsNamingValue.selection.text;
             makeSections(handleLength, nameScheme);
         };
-        
-        
-        
+
+
+
         animaticMater.onResizing = animaticMater.onResize = function () {
             this.layout.resize();
         };
@@ -102,36 +102,33 @@
             // Check that layers are in the correct order
             checkLayerOrder();
 
-            // Store layer indices based on their label color
-            var layerIndicesByLabel = {};
+            var layerIndicesBySection = {};
 
             // Iterate over all layers in the composition to group by label color
+            var currentSectionLabel = -1;
+            var currentSectionIndex = 0;
             for (var i = activeComp.numLayers; i >= 1; i--) {
                 var layer = activeComp.layer(i);
-
-                // Check if the layer has a label color
-                if (layer.label != 0) {
-                    var labelValue = layer.label;
-
-                    // If the label color is not in the object, create an array for it
-                    if (!layerIndicesByLabel[labelValue]) {
-                        layerIndicesByLabel[labelValue] = [];
-                    }
-
-                    // Store the layer index in the array for the label color
-                    layerIndicesByLabel[labelValue].push(layer.index);
+                // If the current layer label is different from the active section label, create a new section grouping
+                if(layer.label != currentSectionLabel) {
+                    currentSectionIndex++;
+                    currentSectionLabel = layer.label;
+                    layerIndicesBySection[currentSectionIndex.toString()] = [];
                 }
+
+                layerIndicesBySection[currentSectionIndex.toString()].push(layer.index);
             }
+            alert("section grouping done");
+            alert("first section: " + layerIndicesBySection["0"]);
 
             // Get a reference to the sections folder
             var compsFolder = findOrCreateFolder(app.project.rootFolder, "Comps");
             var sectionsFolder = findOrCreateFolder(compsFolder, "Sections");
-            
-            // Iterate over each label color and precompose the corresponding layers
-            // TODO: Make section groups based on label color difference, rather than by set color difference, so that the same color can be used on mutliple sections
-            for (var labelValue in layerIndicesByLabel) {
-                if (layerIndicesByLabel.hasOwnProperty(labelValue)) {
-                    var layerIndices = layerIndicesByLabel[labelValue];
+
+            // Iterate over each section and precompose the corresponding layers
+            for (var labelValue in layerIndicesBySection) {
+                if (layerIndicesBySection.hasOwnProperty(labelValue)) {
+                    var layerIndices = layerIndicesBySection[labelValue];
 
                     var groupDuration = 0;
 
@@ -143,7 +140,7 @@
                     }
 
                     var precompStartTime = activeComp.layers[layerIndices[0]].startTime;
-                    
+
                     // Create the new section as a precomp, make sure to run a check to make a unique name
                     var precompName = getSectionName(nameScheme, activeComp.layers[layerIndices[0]].name, activeComp.layers[layerIndices[layerIndices.length-1]].name);
                     var precomp = activeComp.layers.precompose(layerIndices, precompName, true);
